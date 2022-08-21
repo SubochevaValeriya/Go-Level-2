@@ -59,7 +59,7 @@ func division(a, b int) (int, error) {
 }
 
 func fileCreation() error {
-	for i := 1; i <= 100000; i++ {
+	for i := 1; i <= 10000; i++ {
 		file, err := os.Create(fmt.Sprintf("for-files/%v.txt", i))
 		if err != nil {
 			return err
