@@ -29,6 +29,7 @@ func workers() {
 			fmt.Println(job)
 		}(i)
 	}
+
 	time.Sleep(2 * time.Second)
 }
 
