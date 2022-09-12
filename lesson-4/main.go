@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 )
 
@@ -17,33 +21,44 @@ func main() {
 }
 
 func workers() {
+	var sum int
+	wg := sync.WaitGroup{}
+	wg.Add(1000)
 	var workers = make(chan struct{}, 1)
 	defer close(workers)
 	for i := 1; i <= 1000; i++ {
 		workers <- struct{}{}
 
-		go func(job int) {
+		go func() {
 			defer func() {
 				<-workers
 			}()
-			fmt.Println(job)
-		}(i)
+			sum++
+			wg.Done()
+		}()
 	}
-	time.Sleep(2 * time.Second)
+	wg.Wait()
+
+	if sum == 1000 {
+		fmt.Println(true)
+	}
 }
 
 func sigterm() {
-	ch := make(chan string)
-	defer close(ch)
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	done := make(chan bool, 1)
+
 	go func() {
-		ch <- "SIGTERM"
+		sig := <-sigs
+		fmt.Println(sig)
+		done <- true
 	}()
 
-	select {
-	case <-ch:
-		return
-
-	case <-time.After(1 * time.Second):
-		fmt.Println("Second passed")
-	}
+	fmt.Println("awaiting signal")
+	<-done
+	time.Sleep(time.Second * 1)
+	fmt.Println("exiting")
 }
